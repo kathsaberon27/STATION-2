@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Belief Odyssey</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Nunito', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            purple: '#6b21a8',
+                            blue: '#2563eb',
+                            gold: '#fbbf24',
+                            green: '#10b981'
+                        }
+                    },
+                    animation: {
+                        'spin-slow': 'spin 10s linear infinite',
+                        'bounce-slow': 'bounce 3s infinite',
+                        'float': 'float 4s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-15px)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, boxShadow: '0 0 15px rgba(251, 191, 36, 0.6)' },
+                            '50%': { opacity: .7, boxShadow: '0 0 5px rgba(251, 191, 36, 0.2)' },
+                        },
+                        shake: {
+                            '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+                            '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+                            '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+                            '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+                        },
+                        popIn: {
+                            '0%': { opacity: 0, transform: 'scale(0.8)' },
+                            '100%': { opacity: 1, transform: 'scale(1)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+        .map-path {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            right: 10%;
+            height: 4px;
+            background: rgba(255,255,255,0.2);
+            z-index: 0;
+            transform: translateY(-50%);
+            border-radius: 2px;
+        }
+        .map-path-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: #fbbf24;
+            width: 0%;
+            transition: width 1s ease-in-out;
+            border-radius: 2px;
+            box-shadow: 0 0 10px #fbbf24;
+        }
+        .choice-btn {
+            transition: all 0.2s;
+        }
+        .choice-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .choice-btn:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .hide { display: none !important; }
+        
+        /* Custom scrollbar for smaller heights */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.5); }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased flex flex-col">
+
+    <!-- START SCREEN -->
+    <div id="screen-start" class="flex-1 flex flex-col items-center justify-center p-6 text-center animate-pop-in">
+        <div class="text-8xl mb-6 animate-float relative cursor-pointer" onclick="createSparkles(event)">
+            🌍
+            <div class="absolute inset-0 bg-white/20 rounded-full blur-xl -z-10 animate-pulse-glow"></div>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl font-black mb-4 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-gold via-yellow-200 to-brand-gold drop-shadow-sm">
+            WORLD BELIEF ODYSSEY
+        </h1>
+        <h2 class="text-xl md:text-2xl font-bold text-blue-200 mb-8 uppercase tracking-widest">
+            A Journey Through Faith and Influence
+        </h2>
+        
+        <div class="glass-panel rounded-3xl p-6 md:p-8 max-w-2xl mx-auto mb-10 shadow-2xl">
+            <p class="text-xl mb-4 font-semibold">Welcome, World Belief Explorer! 🧭</p>
+            <p class="text-lg text-slate-300 leading-relaxed">
+                Your mission is to journey through time and space and discover how world religions and belief systems continue to influence the world we live in today.
+            </p>
+        </div>
+        
+        <button onclick="startGame()" class="group relative px-8 py-4 bg-gradient-to-b from-brand-blue to-blue-700 rounded-full font-bold text-xl shadow-[0_0_20px_rgba(37,99,235,0.5)] hover:shadow-[0_0_30px_rgba(37,99,235,0.8)] transition-all hover:-translate-y-1 overflow-hidden">
+            <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform"></div>
+            <span class="relative flex items-center gap-2">
+                🚀 BEGIN THE JOURNEY
+            </span>
+        </button>
+    </div>
+
+    <!-- MAP SCREEN -->
+    <div id="screen-map" class="hide flex-1 flex flex-col p-6 w-full max-w-5xl mx-auto">
+        
+        <header class="flex justify-between items-center mb-8 glass-panel p-4 rounded-2xl">
+            <div class="flex items-center gap-3">
+                <span class="text-3xl">🗺️</span>
+                <h2 class="text-2xl font-bold">Explorer's Map</h2>
+            </div>
+            <div class="flex flex-col items-end">
+                <div class="text-sm text-slate-300 uppercase tracking-wide font-bold">Your Score</div>
+                <div class="text-2xl font-black text-brand-gold tracking-widest" id="map-score">
+                    ☆☆☆☆☆☆
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 glass-panel rounded-3xl p-8 relative flex flex-col justify-center shadow-2xl overflow-hidden min-h-[400px]">
+            <!-- Decorative background elements -->
+            <div class="absolute top-10 left-10 text-4xl opacity-20 animate-spin-slow">🧭</div>
+            <div class="absolute bottom-10 right-10 text-4xl opacity-20 animate-float">🏛️</div>
+
+            <!-- The Path -->
+            <div class="relative w-full h-full flex flex-col md:flex-row justify-between items-center px-4 py-12 md:py-0">
+                <div class="absolute top-0 bottom-0 left-1/2 w-1 md:w-auto md:h-2 md:top-1/2 md:bottom-auto md:left-10 md:right-10 bg-white/10 rounded-full -translate-x-1/2 md:translate-x-0 md:-translate-y-1/2 z-0">
+                    <div id="path-progress" class="w-full bg-brand-gold rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_#fbbf24]" style="height: 0%; md:height: 100%; md:width: 0%;"></div>
+                </div>
+
+                <!-- Map Nodes container -->
+                <div id="map-nodes-container" class="relative z-10 w-full h-full flex flex-col md:flex-row justify-between items-center gap-8 md:gap-0">
+                    <!-- Nodes injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL SCREEN -->
+    <div id="screen-level" class="hide flex-1 flex flex-col p-4 md:p-6 w-full max-w-4xl mx-auto h-full">
+        
+        <!-- Level Header -->
+        <header class="flex justify-between items-center mb-6">
+            <button onclick="showScreen('screen-map')" class="px-4 py-2 glass-panel rounded-full hover:bg-white/10 transition-colors flex items-center gap-2 text-sm font-bold">
+                ⬅ Map
+            </button>
+            <div class="glass-panel px-6 py-2 rounded-full font-bold tracking-widest text-brand-gold text-sm" id="level-progress-indicator">
+                LEVEL 1 / 6
+            </div>
+            <div class="w-20"></div> <!-- Spacer for balance -->
+        </header>
+
+        <div class="flex-1 glass-panel rounded-3xl p-6 md:p-10 flex flex-col shadow-2xl relative overflow-hidden">
+            <!-- Background Theme Element -->
+            <div id="level-bg-icon" class="absolute -bottom-10 -right-10 text-[150px] opacity-10 animate-float pointer-events-none"></div>
+
+            <div class="text-center mb-8 relative z-10">
+                <h2 id="level-title" class="text-3xl md:text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300 uppercase">
+                    Level Title
+                </h2>
+                <h3 id="level-focus" class="text-lg md:text-xl text-brand-gold font-bold mb-6">Focus</h3>
+                
+                <div id="level-intro-box" class="bg-black/30 p-5 rounded-2xl border border-white/10 mb-8 inline-block w-full text-left">
+                    <p id="level-info" class="text-lg md:text-xl text-slate-200 leading-relaxed">
+                        Intro text here...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Interactive Area -->
+            <div class="flex-1 flex flex-col justify-center relative z-10 w-full max-w-2xl mx-auto">
+                <h4 id="level-question" class="text-xl md:text-2xl font-bold mb-6 text-center text-white">
+                    Question?
+                </h4>
+                
+                <div id="choices-container" class="space-y-4 w-full">
+                    <!-- Buttons injected via JS -->
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-area" class="mt-8 hidden flex-col items-center animate-pop-in">
+                    <div id="feedback-message-box" class="p-6 rounded-2xl w-full text-center mb-6 shadow-lg border-2">
+                        <div id="feedback-icon" class="text-5xl mb-2">✨</div>
+                        <h4 id="feedback-title" class="text-2xl font-black mb-2">Title</h4>
+                        <p id="feedback-text" class="text-lg"></p>
+                    </div>
+                    <button id="next-level-btn" onclick="continueToMap()" class="px-8 py-3 bg-brand-gold text-brand-dark rounded-full font-black text-lg shadow-[0_0_15px_rgba(251,191,36,0.6)] hover:scale-105 transition-transform flex items-center gap-2">
+                        Continue Journey ➔
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="screen-end" class="hide flex-1 flex flex-col items-center justify-center p-6 text-center">
+        
+        <div class="glass-panel rounded-3xl p-8 md:p-12 max-w-3xl mx-auto shadow-2xl relative overflow-hidden animate-pop-in border-brand-gold/50 border-2">
+            
+            <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-yellow-500/20 via-transparent to-transparent -z-10"></div>
+
+            <div class="text-7xl mb-6 animate-bounce-slow">🏆</div>
+            
+            <h1 class="text-4xl md:text-5xl font-black mb-4 text-brand-gold drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                CONGRATULATIONS!
+            </h1>
+            <h2 class="text-2xl md:text-3xl font-bold mb-8 text-white">
+                World Belief Explorer
+            </h2>
+
+            <div class="bg-black/40 rounded-2xl p-6 mb-8 border border-white/10">
+                <p class="text-lg md:text-xl text-slate-200 mb-4 leading-relaxed">
+                    You have successfully completed the World Belief Odyssey! 🌍✨
+                </p>
+                <p class="text-lg text-slate-300 leading-relaxed mb-6">
+                    You discovered how religions and belief systems have shaped values, knowledge, art, architecture, traditions, communities, and many aspects of the modern world. The journey may be over, but the story of human beliefs and their influence on our world continues!
+                </p>
+                
+                <div class="bg-white/10 rounded-xl p-4 inline-block">
+                    <p class="text-sm uppercase tracking-widest text-slate-400 font-bold mb-2">Final Explorer Score</p>
+                    <div id="final-score-stars" class="text-4xl text-brand-gold tracking-widest">
+                        ☆☆☆☆☆☆
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="startGame()" class="px-8 py-3 bg-white/20 hover:bg-white/30 border border-white/30 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2">
+                    🔄 PLAY AGAIN
+                </button>
+                <button onclick="showScreen('screen-map')" class="px-8 py-3 bg-gradient-to-r from-brand-blue to-purple-600 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center gap-2">
+                    🗺️ RETURN TO MAP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- GAME DATA ---
+        const levelData = [
+            {
+                id: 1,
+                icon: "🏺",
+                shortTitle: "Origins",
+                title: "THE ORIGINS OF BELIEF 🏺",
+                focus: "Understanding Religion and Belief Systems",
+                intro: "Throughout history, people have developed religions and belief systems to understand life, morality, nature, society, and humanity's place in the world.",
+                questionType: "multiple-choice",
+                questionAction: "Choose the Big Idea!",
+                questionText: "Which statement best describes the role of belief systems?",
+                choices: [
+                    "A. Belief systems only explain how people should dress.",
+                    "B. Belief systems can shape people's values, traditions, laws, and ways of life.",
+                    "C. Belief systems have no influence on society."
+                ],
+                correctAnswerIndex: 1,
+                feedbackSuccess: "Correct! Belief systems can influence values, traditions, laws, art, architecture, and social practices."
+            },
+            {
+                id: 2,
+                icon: "🕊️",
+                shortTitle: "Values",
+                title: "THE PATH OF VALUES 🕊️",
+                focus: "Ethics, Morality, and Values",
+                intro: "Many religions and belief systems have deeply influenced global ideas about morality, ethical behavior, compassion, justice, and how people should treat one another.",
+                questionType: "scenario",
+                questionAction: "Match the Value!",
+                questionText: "Read the scenario: 'A community helps families who lost their homes after a disaster.'<br><br>Which value is being demonstrated here?",
+                choices: [
+                    "Compassion",
+                    "Greed",
+                    "Conflict"
+                ],
+                correctAnswerIndex: 0,
+                feedbackSuccess: "Great choice! Ideas about compassion and helping others are emphasized in many religious and belief traditions and continue to influence humanitarian work today."
+            },
+            {
+                id: 3,
+                icon: "💡",
+                shortTitle: "Ideas",
+                title: "THE WORLD OF IDEAS 💡",
+                focus: "Education, Knowledge, and Philosophy",
+                intro: "Religious and belief traditions have historically contributed to the development of education, philosophy, and the preservation of knowledge (e.g., Buddhist learning traditions, Islamic scholarship, Christian universities).",
+                questionType: "multiple-choice",
+                questionAction: "Unlock the Knowledge Chest!",
+                questionText: "Which is an example of how belief systems influenced the development of societies?",
+                choices: [
+                    "A. They encouraged the development of schools, scholarship, and philosophical thinking.",
+                    "B. They completely prevented people from learning.",
+                    "C. They had no connection to education."
+                ],
+                correctAnswerIndex: 0,
+                feedbackSuccess: "Knowledge Unlocked! 📚 Institutions of learning and philosophical thought have deep roots in various belief systems worldwide."
+            },
+            {
+                id: 4,
+                icon: "🎨",
+                shortTitle: "Art",
+                title: "THE ART & ARCHITECTURE REALM 🎨",
+                focus: "Art, Architecture, and Culture",
+                intro: "Religious beliefs have inspired incredible architecture, sculpture, painting, music, and literature. Think of beautiful temples, grand mosques, towering cathedrals, and sacred indigenous spaces.",
+                questionType: "multiple-choice",
+                questionAction: "Spot the Influence!",
+                questionText: "Which area of modern culture has been strongly historically influenced by religious and belief traditions?",
+                choices: [
+                    "🎨 Art and Architecture",
+                    "🏎️ Car Racing",
+                    "🎮 Video Game Controls"
+                ],
+                correctAnswerIndex: 0,
+                feedbackSuccess: "Amazing! Religious beliefs have inspired some of the world's most significant and beautiful works of art, music, and architecture."
+            },
+            {
+                id: 5,
+                icon: "🌎",
+                shortTitle: "Modern",
+                title: "BELIEFS IN THE MODERN WORLD 🌎",
+                focus: "Modern Influence",
+                intro: "From ancient history to modern cities, belief systems continue to influence laws, family life, charity, environmental responsibility, holidays, and cultural traditions today.",
+                questionType: "scenario",
+                questionAction: "Where Do You See the Influence?",
+                questionText: "Read the scenario: 'A community organizes a charity drive to gather food for people in need.'<br><br>Where does this reflect the influence of belief systems?",
+                choices: [
+                    "Space exploration",
+                    "Humanitarian action and community service",
+                    "Weather forecasting"
+                ],
+                correctAnswerIndex: 1,
+                feedbackSuccess: "Spot on! Many modern charities and humanitarian movements were founded on or are inspired by ethical principles taught by world religions."
+            },
+            {
+                id: 6,
+                icon: "🌐",
+                shortTitle: "Connected",
+                title: "THE WORLD IS CONNECTED 🌐",
+                focus: "Synthesis and Reflection",
+                intro: "You have reached the final stage of your journey! Look at the glowing connections between cultures around the world.",
+                questionType: "multiple-choice",
+                questionAction: "Final Challenge!",
+                questionText: "Which statement BEST explains the influence of world religions and belief systems on the modern world?",
+                choices: [
+                    "A. They only influenced ancient societies.",
+                    "B. They continue to influence values, culture, art, education, traditions, communities, and social life today.",
+                    "C. They have no influence on modern society."
+                ],
+                correctAnswerIndex: 1,
+                feedbackSuccess: "Perfect Synthesis! The influence of these systems is woven into the very fabric of our modern global society."
+            }
+        ];
+
+        // --- STATE MANAGEMENT ---
+        let state = {
+            currentScreen: 'screen-start',
+            highestUnlockedLevel: 1,
+            completedLevels: [], // Array of level IDs that are perfectly completed
+            currentLevelIndex: 0, // 0-based index for levelData array
+            score: 0
+        };
+
+        // --- AUDIO ENGINE (Web Audio API) ---
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    // Happy little ding
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); // C6
+                    gainNode.gain.setValueAtTime(0.5, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'wrong') {
+                    // Low boop
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.2);
+                    gainNode.gain.setValueAtTime(0.5, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'win') {
+                    // Fanfare (arpeggio)
+                    const freqs = [523.25, 659.25, 783.99, 1046.50]; // C, E, G, C
+                    osc.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.4, now);
+                    
+                    freqs.forEach((freq, i) => {
+                        const time = now + (i * 0.15);
+                        osc.frequency.setValueAtTime(freq, time);
+                    });
+                    
+                    gainNode.gain.linearRampToValueAtTime(0, now + (freqs.length * 0.15) + 0.5);
+                    osc.start(now);
+                    osc.stop(now + (freqs.length * 0.15) + 0.5);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    gainNode.gain.setValueAtTime(0.1, now);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                }
+            } catch (e) {
+                console.log("Audio not supported or allowed yet.");
+            }
+        }
+
+        // --- CORE UI FUNCTIONS ---
+        
+        function showScreen(screenId) {
+            // Hide all screens
+            ['screen-start', 'screen-map', 'screen-level', 'screen-end'].forEach(id => {
+                document.getElementById(id).classList.add('hide');
+            });
+            // Show target
+            document.getElementById(screenId).classList.remove('hide');
+            state.currentScreen = screenId;
+            window.scrollTo(0, 0);
+
+            if (screenId === 'screen-map') {
+                renderMap();
+                updateScoreDisplay();
+            }
+        }
+
+        function startGame() {
+            playSound('click');
+            // Reset state
+            state.highestUnlockedLevel = 1;
+            state.completedLevels = [];
+            state.score = 0;
+            showScreen('screen-map');
+        }
+
+        function updateScoreDisplay() {
+            const stars = Array(6).fill('☆').fill('⭐', 0, state.score).join('');
+            document.getElementById('map-score').innerText = stars;
+            document.getElementById('final-score-stars').innerText = stars;
+        }
+
+        function renderMap() {
+            const container = document.getElementById('map-nodes-container');
+            container.innerHTML = '';
+            
+            const isMobile = window.innerWidth < 768;
+
+            levelData.forEach((level, index) => {
+                const isUnlocked = level.id <= state.highestUnlockedLevel;
+                const isCompleted = state.completedLevels.includes(level.id);
+                
+                const node = document.createElement('div');
+                node.className = `relative flex flex-col items-center group ${isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}`;
+                
+                // Position adjustments to make a wavy path on desktop
+                if (!isMobile) {
+                    const yOffset = index % 2 === 0 ? '-20px' : '20px';
+                    node.style.transform = `translateY(${yOffset})`;
+                }
+                
+                // Node Circle Style
+                let bgClass = 'bg-slate-700 border-slate-500';
+                let icon = '🔒';
+                
+                if (isCompleted) {
+                    bgClass = 'bg-brand-gold border-yellow-300 shadow-[0_0_20px_#fbbf24]';
+                    icon = level.icon;
+                } else if (isUnlocked) {
+                    bgClass = 'bg-brand-blue border-blue-300 shadow-[0_0_15px_#2563eb] animate-pulse';
+                    icon = level.icon;
+                }
+
+                // Click handler
+                if (isUnlocked) {
+                    node.onclick = () => loadLevel(index);
+                }
+
+                node.innerHTML = `
+                    <div class="w-16 h-16 md:w-20 md:h-20 rounded-full border-4 flex items-center justify-center text-3xl md:text-4xl transition-all duration-300 transform group-hover:scale-110 z-10 ${bgClass} ${isUnlocked && !isCompleted ? 'hover:bg-blue-500' : ''}">
+                        ${icon}
+                    </div>
+                    <div class="mt-4 text-center absolute top-full left-1/2 -translate-x-1/2 w-32 bg-black/50 backdrop-blur-sm rounded-lg py-1 px-2 border border-white/10 opacity-0 md:opacity-100 md:group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        <div class="text-xs font-bold text-brand-gold">LEVEL ${level.id}</div>
+                        <div class="text-sm font-semibold">${level.shortTitle}</div>
+                    </div>
+                    ${isCompleted ? '<div class="absolute -top-2 -right-2 text-xl z-20">⭐</div>' : ''}
+                `;
+                
+                // Add mobile label always visible beneath node
+                if(isMobile) {
+                    const mobileLabel = document.createElement('div');
+                    mobileLabel.className = "mt-2 text-xs font-bold text-center";
+                    mobileLabel.innerHTML = `Lvl ${level.id}<br>${level.shortTitle}`;
+                    node.appendChild(mobileLabel);
+                }
+
+                container.appendChild(node);
+            });
+
+            // Update Progress Bar Line
+            const progressLine = document.getElementById('path-progress');
+            // Calculate percentage based on completed levels (out of 5 gaps between 6 levels)
+            // If highest unlocked is 3, that means 2 paths are filled.
+            const progressGaps = state.highestUnlockedLevel - 1; 
+            const totalGaps = levelData.length - 1;
+            const percentage = (progressGaps / totalGaps) * 100;
+            
+            if (isMobile) {
+                progressLine.style.width = '100%';
+                progressLine.style.height = `${percentage}%`;
+            } else {
+                progressLine.style.height = '100%';
+                progressLine.style.width = `${percentage}%`;
+            }
+        }
+
+        function loadLevel(index) {
+            playSound('click');
+            state.currentLevelIndex = index;
+            const level = levelData[index];
+            
+            // Populate DOM
+            document.getElementById('level-progress-indicator').innerText = `LEVEL ${level.id} / ${levelData.length}`;
+            document.getElementById('level-title').innerText = level.title;
+            document.getElementById('level-focus').innerText = `Focus: ${level.focus}`;
+            document.getElementById('level-info').innerHTML = level.intro;
+            
+            document.getElementById('level-question').innerHTML = `
+                <span class="text-brand-gold text-sm block mb-1 uppercase tracking-wider">${level.questionAction}</span>
+                ${level.questionText}
+            `;
+            
+            document.getElementById('level-bg-icon').innerText = level.icon;
+
+            // Render Choices
+            const choicesContainer = document.getElementById('choices-container');
+            choicesContainer.innerHTML = '';
+            
+            level.choices.forEach((choice, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'choice-btn w-full text-left p-4 rounded-xl glass-panel border border-white/20 text-lg hover:bg-white/10 transition-colors font-medium text-slate-100 flex items-center gap-3';
+                // Remove prefix if it's multiple choice A,B,C for cleaner look, or keep it. We'll keep it as defined in data.
+                btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 text-sm font-bold border border-white/20">${String.fromCharCode(65+i)}</div> <div>${choice}</div>`;
+                
+                // If previously completed, don't allow re-answering for points, but let them review.
+                // For simplicity, let's just let them answer again but restrict score increment later.
+                btn.onclick = () => handleAnswer(i, btn);
+                choicesContainer.appendChild(btn);
+            });
+
+            // Reset Feedback Area
+            document.getElementById('feedback-area').classList.add('hidden');
+            document.getElementById('feedback-area').classList.remove('flex');
+            
+            showScreen('screen-level');
+        }
+
+        function handleAnswer(selectedIndex, buttonElement) {
+            const level = levelData[state.currentLevelIndex];
+            const isCorrect = selectedIndex === level.correctAnswerIndex;
+            const choicesContainer = document.getElementById('choices-container');
+            const buttons = choicesContainer.querySelectorAll('button');
+            
+            // Disable all buttons
+            buttons.forEach(btn => {
+                btn.disabled = true;
+                btn.classList.add('opacity-70', 'cursor-not-allowed');
+            });
+
+            const feedbackArea = document.getElementById('feedback-area');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+            const feedbackBox = document.getElementById('feedback-message-box');
+            const feedbackIcon = document.getElementById('feedback-icon');
+
+            feedbackArea.classList.remove('hidden');
+            feedbackArea.classList.add('flex');
+
+            if (isCorrect) {
+                playSound('correct');
+                buttonElement.classList.remove('glass-panel', 'border-white/20');
+                buttonElement.classList.add('bg-brand-green', 'border-green-400', 'text-white', 'shadow-[0_0_15px_#10b981]');
+                
+                // Create sparkles on the button
+                createSparkles({ clientX: buttonElement.getBoundingClientRect().left + buttonElement.offsetWidth/2, clientY: buttonElement.getBoundingClientRect().top + buttonElement.offsetHeight/2 });
+
+                feedbackBox.className = 'p-6 rounded-2xl w-full text-center mb-6 shadow-[0_0_20px_rgba(16,185,129,0.3)] border-2 border-brand-green bg-brand-green/20 backdrop-blur-md';
+                feedbackIcon.innerText = '🌟';
+                feedbackTitle.innerText = "Excellent, Explorer!";
+                feedbackTitle.className = 'text-2xl font-black mb-2 text-brand-green';
+                feedbackText.innerHTML = level.feedbackSuccess;
+
+                // Update Progress if it's the first time getting it right
+                if (!state.completedLevels.includes(level.id)) {
+                    state.completedLevels.push(level.id);
+                    state.score++;
+                    
+                    // Unlock next level
+                    if (level.id < levelData.length && state.highestUnlockedLevel === level.id) {
+                        state.highestUnlockedLevel++;
+                    }
+                }
+
+                // Change button text contextually
+                const nextBtn = document.getElementById('next-level-btn');
+                if (level.id === levelData.length) {
+                    nextBtn.innerHTML = "Complete Journey 🏆";
+                    nextBtn.onclick = showEndScreen;
+                } else {
+                    nextBtn.innerHTML = "Continue to Map ➔";
+                    nextBtn.onclick = continueToMap;
+                }
+
+            } else {
+                playSound('wrong');
+                buttonElement.classList.remove('glass-panel');
+                buttonElement.classList.add('bg-red-600/50', 'border-red-500', 'animate-shake');
+                
+                // Highlight correct answer
+                buttons[level.correctAnswerIndex].classList.remove('glass-panel');
+                buttons[level.correctAnswerIndex].classList.add('bg-brand-green/30', 'border-brand-green', 'border-2');
+
+                feedbackBox.className = 'p-6 rounded-2xl w-full text-center mb-6 shadow-lg border-2 border-red-500/50 bg-red-900/30 backdrop-blur-md';
+                feedbackIcon.innerText = '🤔';
+                feedbackTitle.innerText = "Not Quite!";
+                feedbackTitle.className = 'text-2xl font-black mb-2 text-red-300';
+                feedbackText.innerHTML = `The better answer was highlighted. <br><br> <span class="text-sm opacity-80">Remember: ${level.feedbackSuccess}</span>`;
+                
+                document.getElementById('next-level-btn').innerHTML = "Back to Map ➔";
+                document.getElementById('next-level-btn').onclick = continueToMap;
+            }
+        }
+
+        function continueToMap() {
+            playSound('click');
+            showScreen('screen-map');
+        }
+
+        function showEndScreen() {
+            playSound('win');
+            showScreen('screen-end');
+            triggerConfetti();
+        }
+
+        function triggerConfetti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                }));
+                confetti(Object.assign({}, defaults, { particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                }));
+            }, 250);
+        }
+
+        // Fun little visual effect for clicking the globe
+        function createSparkles(e) {
+            if(!e || !e.clientX) return;
+            const el = document.createElement('div');
+            el.innerHTML = '✨';
+            el.className = 'absolute text-2xl animate-ping pointer-events-none z-50';
+            el.style.left = (e.clientX - 15) + 'px';
+            el.style.top = (e.clientY - 15) + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        // Handle window resize for map layout updates
+        window.addEventListener('resize', () => {
+            if(state.currentScreen === 'screen-map') {
+                renderMap();
+            }
+        });
+
+        // Initialize Audio context on first user interaction anywhere on the document
+        document.body.addEventListener('click', initAudio, { once: true });
+        document.body.addEventListener('touchstart', initAudio, { once: true });
+
+    </script>
+</body>
+</html>
